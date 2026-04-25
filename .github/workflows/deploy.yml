@@ -37,20 +37,33 @@ jobs:
             exit 0
           fi
 
-          # Build lftp batch commands
-          CMDS="set sftp:auto-confirm yes; set net:max-retries 2; open -u $FTP_USER,$FTP_PASS sftp://$FTP_HOST:65002;"
-
           while IFS= read -r FILE; do
             [ -z "$FILE" ] && continue
             [ ! -f "$FILE" ] && continue
             DIR=$(dirname "$FILE")
+
+            echo "--- Uploading: $FILE ---"
+
+            MKDIR_CMD=""
             if [ "$DIR" != "." ]; then
-              CMDS="$CMDS mkdir -p public_html/$DIR;"
+              MKDIR_CMD="mkdir -p public_html/$DIR;"
             fi
-            CMDS="$CMDS put $FILE -o public_html/$FILE; echo 'Uploaded: $FILE';"
+
+            lftp -c "
+            set sftp:auto-confirm yes;
+            set xfer:log true;
+            set net:max-retries 2;
+            open -u $FTP_USER,$FTP_PASS sftp://$FTP_HOST:65002;
+            $MKDIR_CMD
+            put $FILE -o public_html/$FILE;
+            quit"
+
+            STATUS=$?
+            if [ $STATUS -ne 0 ]; then
+              echo "ERROR: Failed to upload $FILE (exit $STATUS)"
+              exit 1
+            fi
+            echo "OK: $FILE uploaded."
           done <<< "$FILES"
 
-          CMDS="$CMDS quit"
-          echo "Running lftp..."
-          lftp -c "$CMDS"
-          echo "Done."
+          echo "All files deployed successfully."
