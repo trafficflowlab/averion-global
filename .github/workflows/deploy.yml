@@ -15,12 +15,26 @@ jobs:
       - name: Install tools
         run: sudo apt-get install -y sshpass lftp
 
+      - name: Diagnose server structure
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USERNAME }}
+          FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          echo "=== Listing SFTP root ==="
+          BATCH=$(mktemp)
+          echo "ls" >> "$BATCH"
+          echo "ls public_html" >> "$BATCH"
+          echo "ls public_html/thank-you" >> "$BATCH"
+          echo "bye" >> "$BATCH"
+          sshpass -p "$FTP_PASS" sftp -P 65002 -o StrictHostKeyChecking=no -b "$BATCH" "$FTP_USER@$FTP_HOST" 2>&1 || true
+          rm "$BATCH"
+
       - name: Get changed files
         id: changed
         run: |
           FILES=$(git diff --name-only HEAD~1 HEAD | grep -v '^\.github')
-          echo "Changed files:"
-          echo "$FILES"
+          echo "Changed files: $FILES"
           echo "files<<EOF" >> $GITHUB_OUTPUT
           echo "$FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -41,33 +55,24 @@ jobs:
             [ -z "$FILE" ] && continue
             [ ! -f "$FILE" ] && continue
             DIR=$(dirname "$FILE")
-            echo "--- Uploading: $FILE ---"
+            echo "--- Uploading: $FILE ($(wc -c < $FILE) bytes) ---"
 
-            # Build sftp batch
             BATCH=$(mktemp)
             if [ "$DIR" != "." ]; then
               echo "-mkdir public_html/$DIR" >> "$BATCH"
             fi
             echo "put $FILE public_html/$FILE" >> "$BATCH"
+            echo "get public_html/$FILE /tmp/verify_$(basename $FILE)" >> "$BATCH"
             echo "bye" >> "$BATCH"
-
-            cat "$BATCH"
 
             sshpass -p "$FTP_PASS" sftp \
               -P 65002 \
               -o StrictHostKeyChecking=no \
-              -o BatchMode=no \
               -b "$BATCH" \
-              "$FTP_USER@$FTP_HOST"
-
-            STATUS=$?
+              "$FTP_USER@$FTP_HOST" 2>&1
             rm "$BATCH"
 
-            if [ $STATUS -ne 0 ]; then
-              echo "ERROR: Failed to upload $FILE"
-              exit 1
-            fi
-            echo "OK: $FILE"
+            echo "=== Server file first 5 lines ==="
+            head -5 /tmp/verify_$(basename $FILE) 2>/dev/null || echo "Could not retrieve file"
+            echo "=== Server file size: $(wc -c < /tmp/verify_$(basename $FILE) 2>/dev/null || echo unknown) bytes ==="
           done <<< "$FILES"
-
-          echo "All files deployed."
