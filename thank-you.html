@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thank You | Averion Global LLP</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:        #1E56C8;
+      --blue-dark:   #163DA0;
+      --blue-deep:   #0D2460;
+      --charcoal:    #1A2540;
+      --body-text:   #334155;
+      --muted:       #64748B;
+      --border:      #DDE5F0;
+      --off-white:   #F8FAFD;
+      --white:       #FFFFFF;
+      --green:       #16A34A;
+      --gold:        #F59E0B;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--off-white);
+      color: var(--body-text);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+    }
+    .nav a { display: flex; align-items: center; text-decoration: none; }
+    .site-logo { height: 36px; width: auto; }
+
+    /* ── MAIN ── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 20px;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 56px 48px;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 32px rgba(30, 86, 200, .08);
+      animation: fadeUp .5s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .check-circle {
+      width: 72px;
+      height: 72px;
+      background: #DCFCE7;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+    }
+    .check-circle svg { width: 36px; height: 36px; stroke: var(--green); }
+
+    .card h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--charcoal);
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .card p {
+      font-size: 1rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 8px;
+    }
+
+    .card p strong {
+      color: var(--body-text);
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 28px 0;
+    }
+
+    .what-next {
+      background: #EFF6FF;
+      border-radius: 12px;
+      padding: 20px 24px;
+      text-align: left;
+      margin-bottom: 32px;
+    }
+    .what-next-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 12px;
+    }
+    .what-next ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .what-next li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: .92rem;
+      color: var(--body-text);
+      line-height: 1.5;
+    }
+    .what-next li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      margin-top: 1px;
+      background: var(--blue);
+      border-radius: 50%;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+      background-size: 11px 11px;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .btn-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 14px 32px;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: opacity .2s;
+    }
+    .btn-home:hover { opacity: .88; }
+
+    .disclaimer {
+      margin-top: 24px;
+      font-size: .8rem;
+      color: var(--muted);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: .8rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      background: var(--white);
+    }
+
+    @media (max-width: 540px) {
+      .card { padding: 40px 24px; }
+      .card h1 { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <a href="/" aria-label="Averion Global LLP home">
+      <img src="images/logo.svg" alt="Averion Global LLP" class="site-logo" />
+    </a>
+  </nav>
+
+  <main>
+    <div class="card">
+
+      <div class="check-circle" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+
+      <h1>Thank You!</h1>
+      <p>Your enquiry has been successfully received.</p>
+      <p><strong>Our advisory team will contact you within 24 hours</strong> to discuss your eligibility and next steps.</p>
+
+      <div class="divider"></div>
+
+      <div class="what-next">
+        <div class="what-next-title">What happens next?</div>
+        <ul>
+          <li>Our expert will review your details and call you shortly.</li>
+          <li>We'll assess your eligibility for relevant schemes and services.</li>
+          <li>You'll receive a personalised action plan — completely free.</li>
+        </ul>
+      </div>
+
+      <a href="/" class="btn-home">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/>
+          <polyline points="9 21 9 12 15 12 15 21"/>
+        </svg>
+        Return to Home
+      </a>
+
+      <p class="disclaimer">🔒 Private consultancy. Not affiliated with any government authority.</p>
+    </div>
+  </main>
+
+  <footer>
+    &copy; <script>document.write(new Date().getFullYear())</script> Averion Global LLP. All rights reserved.
+  </footer>
+
+</body>
+</html>
