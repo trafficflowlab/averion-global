@@ -18,7 +18,7 @@ jobs:
           set net:max-retries 3;
           set net:reconnect-interval-base 5;
           open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} sftp://${{ secrets.FTP_HOST }}:65002;
-          mirror -R --no-empty-dirs --parallel=4 \
+          mirror -R --no-empty-dirs --parallel=4 --transfer-all \
             --exclude-glob .git/ \
             --exclude-glob .github/ \
             ./ public_html/;
