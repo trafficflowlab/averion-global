@@ -12,8 +12,8 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Install lftp
-        run: sudo apt-get install -y lftp
+      - name: Install tools
+        run: sudo apt-get install -y sshpass lftp
 
       - name: Get changed files
         id: changed
@@ -25,7 +25,7 @@ jobs:
           echo "$FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Upload changed files via SFTP
+      - name: Upload via sftp
         env:
           FTP_HOST: ${{ secrets.FTP_HOST }}
           FTP_USER: ${{ secrets.FTP_USERNAME }}
@@ -41,29 +41,33 @@ jobs:
             [ -z "$FILE" ] && continue
             [ ! -f "$FILE" ] && continue
             DIR=$(dirname "$FILE")
-
             echo "--- Uploading: $FILE ---"
 
-            MKDIR_CMD=""
+            # Build sftp batch
+            BATCH=$(mktemp)
             if [ "$DIR" != "." ]; then
-              MKDIR_CMD="mkdir -p public_html/$DIR;"
+              echo "-mkdir public_html/$DIR" >> "$BATCH"
             fi
+            echo "put $FILE public_html/$FILE" >> "$BATCH"
+            echo "bye" >> "$BATCH"
 
-            lftp -c "
-            set sftp:auto-confirm yes;
-            set xfer:log true;
-            set net:max-retries 2;
-            open -u $FTP_USER,$FTP_PASS sftp://$FTP_HOST:65002;
-            $MKDIR_CMD
-            put $FILE -o public_html/$FILE;
-            quit"
+            cat "$BATCH"
+
+            sshpass -p "$FTP_PASS" sftp \
+              -P 65002 \
+              -o StrictHostKeyChecking=no \
+              -o BatchMode=no \
+              -b "$BATCH" \
+              "$FTP_USER@$FTP_HOST"
 
             STATUS=$?
+            rm "$BATCH"
+
             if [ $STATUS -ne 0 ]; then
-              echo "ERROR: Failed to upload $FILE (exit $STATUS)"
+              echo "ERROR: Failed to upload $FILE"
               exit 1
             fi
-            echo "OK: $FILE uploaded."
+            echo "OK: $FILE"
           done <<< "$FILES"
 
-          echo "All files deployed successfully."
+          echo "All files deployed."
