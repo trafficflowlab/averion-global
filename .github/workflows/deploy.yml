@@ -12,30 +12,45 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Get changed files
-        id: changed
-        run: |
-          echo "files=$(git diff --name-only HEAD~1 HEAD | grep -v '^\.github' | tr '\n' ' ')" >> $GITHUB_OUTPUT
-
       - name: Install lftp
         run: sudo apt-get install -y lftp
 
+      - name: Get changed files
+        id: changed
+        run: |
+          FILES=$(git diff --name-only HEAD~1 HEAD | grep -v '^\.github')
+          echo "Changed files:"
+          echo "$FILES"
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Upload changed files via SFTP
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USERNAME }}
+          FTP_PASS: ${{ secrets.FTP_PASSWORD }}
         run: |
           FILES="${{ steps.changed.outputs.files }}"
           if [ -z "$FILES" ]; then
             echo "No files to upload."
             exit 0
           fi
-          echo "Uploading: $FILES"
-          for FILE in $FILES; do
-            if [ -f "$FILE" ]; then
-              DIR=$(dirname "$FILE")
-              lftp -c "
-              set sftp:auto-confirm yes;
-              open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} sftp://${{ secrets.FTP_HOST }}:65002;
-              $([ '$DIR' != '.' ] && echo "mkdir -fp public_html/$DIR;" || echo "")
-              put $FILE -o public_html/$FILE;
-              quit"
+
+          # Build lftp batch commands
+          CMDS="set sftp:auto-confirm yes; set net:max-retries 2; open -u $FTP_USER,$FTP_PASS sftp://$FTP_HOST:65002;"
+
+          while IFS= read -r FILE; do
+            [ -z "$FILE" ] && continue
+            [ ! -f "$FILE" ] && continue
+            DIR=$(dirname "$FILE")
+            if [ "$DIR" != "." ]; then
+              CMDS="$CMDS mkdir -p public_html/$DIR;"
             fi
-          done
+            CMDS="$CMDS put $FILE -o public_html/$FILE; echo 'Uploaded: $FILE';"
+          done <<< "$FILES"
+
+          CMDS="$CMDS quit"
+          echo "Running lftp..."
+          lftp -c "$CMDS"
+          echo "Done."
