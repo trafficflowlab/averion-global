@@ -276,7 +276,7 @@ function handleHeroForm(e) {
   }
 
   setButtonLoading(btn, true);
-  setTimeout(() => { window.location.href = 'thank-you.html'; }, 1200);
+  setTimeout(() => { window.location.href = '/thank-you/'; }, 1200);
 }
 
 /* ── 12. MAIN FORM HANDLER ────────────────────────────────────── */
@@ -298,7 +298,7 @@ function handleMainForm(e) {
   }
 
   setButtonLoading(btn, true);
-  setTimeout(() => { window.location.href = 'thank-you.html'; }, 1400);
+  setTimeout(() => { window.location.href = '/thank-you/'; }, 1400);
 }
 
 /* ── HELPERS ──────────────────────────────────────────────────── */
