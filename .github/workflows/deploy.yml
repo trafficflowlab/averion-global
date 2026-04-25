@@ -9,17 +9,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-      - name: Deploy via SFTP (lftp)
+      - name: Get changed files
+        id: changed
         run: |
-          sudo apt-get install -y lftp
-          lftp -c "
-          set sftp:auto-confirm yes;
-          set net:max-retries 3;
-          set net:reconnect-interval-base 5;
-          open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} sftp://${{ secrets.FTP_HOST }}:65002;
-          mirror -R --no-empty-dirs --parallel=4 --transfer-all \
-            --exclude-glob .git/ \
-            --exclude-glob .github/ \
-            ./ public_html/;
-          quit"
+          echo "files=$(git diff --name-only HEAD~1 HEAD | grep -v '^\.github' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
+      - name: Install lftp
+        run: sudo apt-get install -y lftp
+
+      - name: Upload changed files via SFTP
+        run: |
+          FILES="${{ steps.changed.outputs.files }}"
+          if [ -z "$FILES" ]; then
+            echo "No files to upload."
+            exit 0
+          fi
+          echo "Uploading: $FILES"
+          for FILE in $FILES; do
+            if [ -f "$FILE" ]; then
+              DIR=$(dirname "$FILE")
+              lftp -c "
+              set sftp:auto-confirm yes;
+              open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} sftp://${{ secrets.FTP_HOST }}:65002;
+              $([ '$DIR' != '.' ] && echo "mkdir -fp public_html/$DIR;" || echo "")
+              put $FILE -o public_html/$FILE;
+              quit"
+            fi
+          done
