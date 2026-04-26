@@ -12,23 +12,15 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Install tools
-        run: sudo apt-get install -y sshpass lftp
-
-      - name: Diagnose server structure
-        env:
-          FTP_HOST: ${{ secrets.FTP_HOST }}
-          FTP_USER: ${{ secrets.FTP_USERNAME }}
-          FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+      - name: Setup SSH key
         run: |
-          echo "=== Listing SFTP root ==="
-          BATCH=$(mktemp)
-          echo "ls" >> "$BATCH"
-          echo "ls public_html" >> "$BATCH"
-          echo "ls public_html/thank-you" >> "$BATCH"
-          echo "bye" >> "$BATCH"
-          sshpass -p "$FTP_PASS" sftp -P 65002 -o StrictHostKeyChecking=no -b "$BATCH" "$FTP_USER@$FTP_HOST" 2>&1 || true
-          rm "$BATCH"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p 65002 ${{ secrets.FTP_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Install lftp
+        run: sudo apt-get install -y lftp
 
       - name: Get changed files
         id: changed
@@ -39,11 +31,7 @@ jobs:
           echo "$FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Upload via sftp
-        env:
-          FTP_HOST: ${{ secrets.FTP_HOST }}
-          FTP_USER: ${{ secrets.FTP_USERNAME }}
-          FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+      - name: Upload via SFTP (SSH key)
         run: |
           FILES="${{ steps.changed.outputs.files }}"
           if [ -z "$FILES" ]; then
@@ -55,24 +43,26 @@ jobs:
             [ -z "$FILE" ] && continue
             [ ! -f "$FILE" ] && continue
             DIR=$(dirname "$FILE")
-            echo "--- Uploading: $FILE ($(wc -c < $FILE) bytes) ---"
+            echo "--- Uploading: $FILE ---"
 
             BATCH=$(mktemp)
             if [ "$DIR" != "." ]; then
               echo "-mkdir public_html/$DIR" >> "$BATCH"
             fi
             echo "put $FILE public_html/$FILE" >> "$BATCH"
-            echo "get public_html/$FILE /tmp/verify_$(basename $FILE)" >> "$BATCH"
             echo "bye" >> "$BATCH"
 
-            sshpass -p "$FTP_PASS" sftp \
-              -P 65002 \
+            sftp -P 65002 \
+              -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=no \
+              -o BatchMode=yes \
               -b "$BATCH" \
-              "$FTP_USER@$FTP_HOST" 2>&1
-            rm "$BATCH"
+              ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_HOST }}
 
-            echo "=== Server file first 5 lines ==="
-            head -5 /tmp/verify_$(basename $FILE) 2>/dev/null || echo "Could not retrieve file"
-            echo "=== Server file size: $(wc -c < /tmp/verify_$(basename $FILE) 2>/dev/null || echo unknown) bytes ==="
+            STATUS=$?
+            rm "$BATCH"
+            [ $STATUS -ne 0 ] && echo "ERROR: Failed $FILE" && exit 1
+            echo "OK: $FILE"
           done <<< "$FILES"
+
+          echo "All files deployed."
