@@ -62,6 +62,15 @@ jobs:
             STATUS=$?
             rm "$BATCH"
             [ $STATUS -ne 0 ] && echo "ERROR: Failed $FILE" && exit 1
+
+            # Verify via SSH: check actual file size on server
+            REMOTE_SIZE=$(ssh -p 65002 -i ~/.ssh/deploy_key \
+              -o StrictHostKeyChecking=no \
+              ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_HOST }} \
+              "wc -c < ~/public_html/$FILE 2>/dev/null || echo 0")
+            LOCAL_SIZE=$(wc -c < "$FILE")
+            echo "Local: $LOCAL_SIZE bytes | Server: $REMOTE_SIZE bytes"
+            [ "$LOCAL_SIZE" != "$REMOTE_SIZE" ] && echo "MISMATCH — file not updated!" && exit 1
             echo "OK: $FILE"
           done <<< "$FILES"
 
