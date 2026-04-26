@@ -17,7 +17,9 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p 65002 ${{ secrets.FTP_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan -p 65002 -T 10 ${{ secrets.FTP_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "UserKnownHostsFile /dev/null" >> ~/.ssh/config
 
       - name: Install lftp
         run: sudo apt-get install -y lftp
